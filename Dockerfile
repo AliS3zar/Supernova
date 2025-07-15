@@ -1,19 +1,32 @@
-FROM ubuntu:22.04
+FROM alpine:latest
 
-# Install required dependencies (add more as needed)
-RUN apt-get update && apt-get install -y \
+# Install necessary packages
+RUN apk add --no-cache \
     curl \
-    wget \
-    bash \
-    && rm -rf /var/lib/apt/lists/*
+    ca-certificates \
+    openssl
 
-# Copy your script into the container
-COPY supernova.sh /app/supernova.sh
+# Download and install Hysteria
+RUN curl -fsSL https://get.hy2.sh/ | sh
 
-WORKDIR /app
+# Create directory for config
+RUN mkdir -p /etc/hysteria
 
-# Make your script executable
-RUN chmod +x supernova.sh
+# Copy configuration file
+COPY config.yaml /etc/hysteria/config.yaml
 
-# Set the default command (edit if your script needs arguments)
-CMD ["bash", "supernova.sh"]
+# Generate self-signed certificate (for testing - use proper certs in production)
+RUN openssl req -x509 -nodes -newkey rsa:4096 -keyout /etc/hysteria/server.key -out /etc/hysteria/server.crt -days 365 -subj "/CN=hysteria"
+
+# Expose port (Railway will handle port mapping)
+EXPOSE 443
+
+# Create a startup script to handle Railway's dynamic port
+RUN echo '#!/bin/sh\n\
+PORT=${PORT:-443}\n\
+sed -i "s/:443/:$PORT/g" /etc/hysteria/config.yaml\n\
+exec hysteria server -c /etc/hysteria/config.yaml' > /start.sh && \
+chmod +x /start.sh
+
+# Run Hysteria with dynamic port
+CMD ["/start.sh"]
