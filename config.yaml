@@ -6,7 +6,7 @@ tls:
 
 auth:
   type: password
-  password: your-password-here
+  password: nigganigga
 
 bandwidth:
   up: 1 gbps
