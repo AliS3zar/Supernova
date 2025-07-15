@@ -1,0 +1,13 @@
+listen: :443
+
+tls:
+  cert: /etc/hysteria/server.crt
+  key: /etc/hysteria/server.key
+
+auth:
+  type: password
+  password: your-password-here
+
+bandwidth:
+  up: 1 gbps
+  down: 1 gbps
